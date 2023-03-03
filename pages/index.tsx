@@ -8,15 +8,16 @@ export default function Home() {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  async function startMining() {
+  async function startMining(recipientAddress : string) {
     setLoading(true);
-    try {
-      const recipientAddress = await wallet.getChangeAddress();
-      const utxos = await wallet.getUtxos();
 
+    try {
+      
+      const utxos = await wallet.getUtxos();
       const { assetName, maskedTx, originalMetadata } = await createTransaction(
         recipientAddress,
-        utxos
+        utxos,
+        wallet,
       );
 
       const signedTx = await wallet.signTx(maskedTx, true);
@@ -35,6 +36,17 @@ export default function Home() {
     }
     setLoading(false);
   }
+
+  // input 
+  const [inputValue, setInputValue] = useState("");
+
+  const handleInputChange = (event) => {
+    setInputValue(event.target.value);
+  };
+
+  const handleButtonClick = () => {
+    startMining(inputValue);
+  };
 
   return (
     <div className="container">
@@ -59,13 +71,12 @@ export default function Home() {
 
         <div className="demo">
           {connected ? (
-            <button
-              type="button"
-              onClick={() => startMining()}
-              disabled={loading}
-            >
-              {loading ? "Creating transaction..." : "Mint Mesh Token"}
-            </button>
+            <>
+              <input type="text" value={inputValue} onChange={handleInputChange} />
+              <button type="button" onClick={handleButtonClick} disabled={loading}>
+                {loading ? "Creating transaction..." : "Mint Mesh Token"}
+              </button>
+            </>
           ) : (
             <CardanoWallet />
           )}

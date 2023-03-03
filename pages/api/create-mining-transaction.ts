@@ -13,36 +13,32 @@ import {
   bankWalletAddress,
   costLovelace,
 } from "../../config/mint";
+import { receiveMessageOnPort } from "worker_threads";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // const recipientAddress = "addr_test1qqpfz2zffg0ja48swnpc04jcdav6sthqzmxuwr2cakclufcvcgtxhvd62pjwh5j7rwet3mpx577u2yhth36nck9e49nsmh8d7h"
   const recipientAddress = req.body.recipientAddress;
   const utxos = req.body.utxos;
+  console.log(recipientAddress)
 
   const blockchainProvider = new KoiosProvider("preview");
+  const appWallet = req.body.wallet;
 
-  const appWallet = new AppWallet({
-    networkId: 0,
-    fetcher: blockchainProvider,
-    submitter: blockchainProvider,
-    key: {
-      type: "mnemonic",
-      words: demoMnemonic,
-    },
-  });
-
-  const appWalletAddress = appWallet.getPaymentAddress();
+  const appWalletAddress = bankWalletAddress;
   const forgingScript = ForgeScript.withOneSignature(appWalletAddress);
 
   /**
    * TODO: Here you want to select one of your NFT that has not been minted
    */
 
-  const assetIdPrefix = "MeshToken";
+  const assetIdPrefix = "test NFT";
   // In this starter template, we simply randomly pick one from.
-  let selectedAssetId = Math.floor(Math.random() * 10).toString();
+  // let selectedAssetId = Math.floor(Math.random() * 10).toString();
+  let selectedAssetId = "0";
+
   const assetMetadata = assetsMetadata[selectedAssetId];
   const assetName = `${assetIdPrefix}${selectedAssetId}`;
 
@@ -61,8 +57,7 @@ export default async function handler(
   const tx = new Transaction({ initiator: appWallet });
   tx.setTxInputs(selectedUtxos);
   tx.mintAsset(forgingScript, asset);
-  tx.sendLovelace(bankWalletAddress, costLovelace);
-  tx.setChangeAddress(recipientAddress);
+  tx.setChangeAddress(bankWalletAddress);
 
   const unsignedTx = await tx.build();
 
